@@ -72,7 +72,7 @@ public class ClientServiceImpl implements ClientService {
                 .product(product)
                 .dealDate(request.getConversionDate() != null ? request.getConversionDate() : LocalDate.now())
                 .totalAmount(defaultAmount(request.getReward()))
-                .budget(request.getBudget())
+                .budget(resolveBudget(request.getBudget(), request.getReward()))
                 .notes(normalizeOptional(request.getNotes()))
                 .clientStage(request.getClientStage() != null ? request.getClientStage() : ClientStage.ACTIVE)
                 .priority(request.getPriority() != null ? request.getPriority() : Priority.MEDIUM)
@@ -114,7 +114,7 @@ public class ClientServiceImpl implements ClientService {
         client.setProduct(resolveActiveProduct(request.getPurchasedProductId()));
         client.setDealDate(request.getConversionDate());
         client.setTotalAmount(defaultAmount(request.getReward()));
-        client.setBudget(request.getBudget());
+        client.setBudget(resolveBudget(request.getBudget(), request.getReward()));
         client.setNotes(normalizeOptional(request.getNotes()));
         if (request.getClientStage() != null) {
             client.setClientStage(request.getClientStage());
@@ -223,6 +223,10 @@ public class ClientServiceImpl implements ClientService {
 
     private BigDecimal defaultAmount(BigDecimal amount) {
         return amount != null ? amount : BigDecimal.ZERO;
+    }
+
+    private BigDecimal resolveBudget(BigDecimal budget, BigDecimal reward) {
+        return budget != null ? budget : reward;
     }
 
     private ClientDetailsResponse toDetailsResponse(Client client) {

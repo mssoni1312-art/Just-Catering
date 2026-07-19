@@ -41,7 +41,7 @@ public class DashboardServiceImpl implements DashboardService {
         long meetingLeads = leadRepository.countByDeletedFalse();
         long totalClients = clientRepository.countByDeletedFalse();
 
-        BigDecimal totalProjectBudget = clientRepository.sumBudgetByDeletedFalse();
+        BigDecimal totalRevenue = clientRepository.sumBudgetByDeletedFalse();
         BigDecimal totalDealAmount = clientRepository.sumTotalAmountByDeletedFalse();
         BigDecimal totalCollected = paymentRepository.sumAmountByDeletedFalse();
         BigDecimal outstandingBalance = totalDealAmount.subtract(totalCollected);
@@ -53,7 +53,7 @@ public class DashboardServiceImpl implements DashboardService {
         return DashboardOverviewResponse.builder()
                 .meetingLeads(meetingLeads)
                 .totalClients(totalClients)
-                .totalRevenue(totalProjectBudget)
+                .totalRevenue(totalRevenue)
                 .totalReceivable(totalCollected)
                 .pendingAmount(outstandingBalance)
                 .totalQueries(totalQueries)

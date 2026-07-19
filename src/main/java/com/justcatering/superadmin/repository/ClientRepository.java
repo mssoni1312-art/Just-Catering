@@ -100,7 +100,7 @@ public interface ClientRepository
      * @return total project budget
      */
     @Query("""
-            SELECT COALESCE(SUM(c.budget), 0)
+            SELECT COALESCE(SUM(COALESCE(c.budget, c.totalAmount, 0)), 0)
             FROM Client c
             WHERE c.deleted = FALSE
             """)
