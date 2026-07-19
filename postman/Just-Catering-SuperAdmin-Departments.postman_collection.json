@@ -1,0 +1,111 @@
+{
+  "info": {
+    "name": "Just Catering SuperAdmin - Departments",
+    "description": "Department / Team member APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "accessToken", "value": "" },
+    { "key": "departmentUuid", "value": "" },
+    { "key": "userUuid", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.data) { pm.collectionVariables.set('accessToken', json.data.accessToken); }"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@justcatering.com\",\n  \"password\": \"Admin@12345\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "List Departments",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+        "url": "{{baseUrl}}/api/departments"
+      }
+    },
+    {
+      "name": "Search Departments",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+        "url": "{{baseUrl}}/api/departments/search?search=Sales"
+      }
+    },
+    {
+      "name": "Create Department",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.data) { pm.collectionVariables.set('departmentUuid', json.data.uuid); }"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"QA Team\",\n  \"description\": \"Quality assurance team\",\n  \"members\": [\n    {\n      \"userUuid\": \"{{userUuid}}\",\n      \"designation\": \"QA Lead\",\n      \"lead\": true\n    }\n  ]\n}"
+        },
+        "url": "{{baseUrl}}/api/departments"
+      }
+    },
+    {
+      "name": "Get Department",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+        "url": "{{baseUrl}}/api/departments/{{departmentUuid}}"
+      }
+    },
+    {
+      "name": "Add Member",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userUuid\": \"{{userUuid}}\",\n  \"designation\": \"QA Engineer\",\n  \"lead\": false\n}"
+        },
+        "url": "{{baseUrl}}/api/departments/{{departmentUuid}}/members"
+      }
+    },
+    {
+      "name": "Department Dropdown",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+        "url": "{{baseUrl}}/api/departments/dropdown"
+      }
+    }
+  ]
+}

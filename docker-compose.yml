@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: just-catering-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: just_catering_superadmin
+      POSTGRES_USER: just_catering
+      POSTGRES_PASSWORD: just_catering_secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - just_catering_pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U just_catering -d just_catering_superadmin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - just-catering-network
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: just-catering-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@justcatering.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - just_catering_pgadmin:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - just-catering-network
+
+volumes:
+  just_catering_pgdata:
+  just_catering_pgadmin:
+
+networks:
+  just-catering-network:
+    driver: bridge

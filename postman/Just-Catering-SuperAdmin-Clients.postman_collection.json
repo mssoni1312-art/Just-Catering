@@ -1,0 +1,123 @@
+{
+  "info": {
+    "name": "Just Catering SuperAdmin - Clients",
+    "description": "Client CRM APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "accessToken", "value": "" },
+    { "key": "clientUuid", "value": "" },
+    { "key": "productUuid", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.data) { pm.collectionVariables.set('accessToken', json.data.accessToken); }"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@justcatering.com\",\n  \"password\": \"Admin@12345\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "Product Dropdown",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.data && json.data.length) { pm.collectionVariables.set('productUuid', json.data[0].uuid); }"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+        "url": "{{baseUrl}}/api/products/dropdown"
+      }
+    },
+    {
+      "name": "List Clients",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+        "url": "{{baseUrl}}/api/clients?page=0&size=20"
+      }
+    },
+    {
+      "name": "Search Clients",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+        "url": "{{baseUrl}}/api/clients/search?search=Rahul"
+      }
+    },
+    {
+      "name": "Filter Clients",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+        "url": "{{baseUrl}}/api/clients/filter?clientStage=ACTIVE&priority=HIGH"
+      }
+    },
+    {
+      "name": "Create Client",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.data) { pm.collectionVariables.set('clientUuid', json.data.uuid); }"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clientName\": \"Rahul Caterers\",\n  \"contactPerson\": \"Rahul Caterers Pvt. Ltd\",\n  \"mobileNumber\": \"+91 98220 11223\",\n  \"email\": \"rahul@caterers.in\",\n  \"type\": \"Just Catering\",\n  \"gstNumber\": \"24ABCDE1234F1Z5\",\n  \"purchasedProductId\": \"{{productUuid}}\",\n  \"conversionDate\": \"2025-07-17\",\n  \"totalAmount\": 250000.00,\n  \"priority\": \"High\",\n  \"notes\": \"Client insists on quick implementation\"\n}"
+        },
+        "url": "{{baseUrl}}/api/clients"
+      }
+    },
+    {
+      "name": "Get Client",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+        "url": "{{baseUrl}}/api/clients/{{clientUuid}}"
+      }
+    },
+    {
+      "name": "Client Dropdown",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+        "url": "{{baseUrl}}/api/clients/dropdown"
+      }
+    }
+  ]
+}
