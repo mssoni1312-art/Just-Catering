@@ -6,10 +6,10 @@
 -- Default roles
 INSERT INTO roles (name, code, description, is_system, status)
 VALUES
-    ('Super Admin', 'SUPER_ADMIN', 'Full system access', TRUE, 'ACTIVE'),
-    ('Admin', 'ADMIN', 'Administrative access with limited system settings', TRUE, 'ACTIVE'),
-    ('Manager', 'MANAGER', 'Department and project management access', TRUE, 'ACTIVE'),
-    ('Member', 'MEMBER', 'Standard staff member access', TRUE, 'ACTIVE');
+    ('Super Admin', 'SUPER_ADMIN', 'Full system access', 1, 'ACTIVE'),
+    ('Admin', 'ADMIN', 'Administrative access with limited system settings', 1, 'ACTIVE'),
+    ('Manager', 'MANAGER', 'Department and project management access', 1, 'ACTIVE'),
+    ('Member', 'MEMBER', 'Standard staff member access', 1, 'ACTIVE');
 
 -- Permissions (module-based)
 INSERT INTO permissions (name, code, module, description, status)
@@ -61,7 +61,7 @@ SELECT r.id, p.id
 FROM roles r
 CROSS JOIN permissions p
 WHERE r.code = 'SUPER_ADMIN'
-  AND p.deleted = FALSE;
+  AND p.deleted = 0;
 
 -- Admin gets all except SETTINGS_MANAGE and ROLE_MANAGE
 INSERT INTO role_permissions (role_id, permission_id)
@@ -70,7 +70,7 @@ FROM roles r
 CROSS JOIN permissions p
 WHERE r.code = 'ADMIN'
   AND p.code NOT IN ('SETTINGS_MANAGE', 'ROLE_MANAGE')
-  AND p.deleted = FALSE;
+  AND p.deleted = 0;
 
 -- Manager permissions
 INSERT INTO role_permissions (role_id, permission_id)
@@ -90,7 +90,7 @@ WHERE r.code = 'MANAGER'
       'PRODUCT_VIEW',
       'DASHBOARD_VIEW'
   )
-  AND p.deleted = FALSE;
+  AND p.deleted = 0;
 
 -- Member permissions
 INSERT INTO role_permissions (role_id, permission_id)
@@ -106,4 +106,4 @@ WHERE r.code = 'MEMBER'
       'EXPENSE_VIEW', 'EXPENSE_MANAGE',
       'DASHBOARD_VIEW'
   )
-  AND p.deleted = FALSE;
+  AND p.deleted = 0;

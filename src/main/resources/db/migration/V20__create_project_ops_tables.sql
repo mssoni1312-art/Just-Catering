@@ -4,19 +4,19 @@
 -- =============================================================================
 
 CREATE TABLE client_manager_assignments (
-    id                  BIGSERIAL       PRIMARY KEY,
-    uuid                UUID            NOT NULL DEFAULT gen_random_uuid(),
+    id                  INTEGER       PRIMARY KEY AUTOINCREMENT,
+    uuid            TEXT            NOT NULL DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
     client_id           BIGINT          NOT NULL,
     department_id       BIGINT,
     user_id             BIGINT          NOT NULL,
     project_name        VARCHAR(200),
     close_date          DATE,
     reward_amount       NUMERIC(14, 2),
-    created_at          TIMESTAMPTZ     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at          TIMESTAMPTZ     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at          TEXT     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TEXT     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by          BIGINT,
     updated_by          BIGINT,
-    deleted             BOOLEAN         NOT NULL DEFAULT FALSE,
+    deleted             INTEGER         NOT NULL DEFAULT 0,
     status              VARCHAR(30)     NOT NULL DEFAULT 'ACTIVE',
     version             BIGINT          NOT NULL DEFAULT 0,
 
@@ -33,35 +33,30 @@ CREATE TABLE client_manager_assignments (
 
 CREATE UNIQUE INDEX uq_client_manager_assignments_client_user_active
     ON client_manager_assignments (client_id, user_id)
-    WHERE deleted = FALSE;
+    WHERE deleted = 0;
 
-CREATE INDEX idx_client_manager_assignments_status ON client_manager_assignments (status) WHERE deleted = FALSE;
-CREATE INDEX idx_client_manager_assignments_client_id ON client_manager_assignments (client_id) WHERE deleted = FALSE;
-CREATE INDEX idx_client_manager_assignments_department_id ON client_manager_assignments (department_id) WHERE deleted = FALSE;
-CREATE INDEX idx_client_manager_assignments_user_id ON client_manager_assignments (user_id) WHERE deleted = FALSE;
-CREATE INDEX idx_client_manager_assignments_close_date ON client_manager_assignments (close_date) WHERE deleted = FALSE;
+CREATE INDEX idx_client_manager_assignments_status ON client_manager_assignments (status) WHERE deleted = 0;
+CREATE INDEX idx_client_manager_assignments_client_id ON client_manager_assignments (client_id) WHERE deleted = 0;
+CREATE INDEX idx_client_manager_assignments_department_id ON client_manager_assignments (department_id) WHERE deleted = 0;
+CREATE INDEX idx_client_manager_assignments_user_id ON client_manager_assignments (user_id) WHERE deleted = 0;
+CREATE INDEX idx_client_manager_assignments_close_date ON client_manager_assignments (close_date) WHERE deleted = 0;
 CREATE INDEX idx_client_manager_assignments_deleted ON client_manager_assignments (deleted);
 CREATE INDEX idx_client_manager_assignments_created_at ON client_manager_assignments (created_at);
 
-COMMENT ON TABLE client_manager_assignments IS 'Manager / team member assignments per client project';
-COMMENT ON COLUMN client_manager_assignments.user_id IS 'Assigned manager or team member';
-COMMENT ON COLUMN client_manager_assignments.project_name IS 'Optional project label for the assignment';
-COMMENT ON COLUMN client_manager_assignments.close_date IS 'Target project close date';
-COMMENT ON COLUMN client_manager_assignments.reward_amount IS 'Optional reward or incentive amount';
 
 CREATE TABLE client_deadlines (
-    id                  BIGSERIAL       PRIMARY KEY,
-    uuid                UUID            NOT NULL DEFAULT gen_random_uuid(),
+    id                  INTEGER       PRIMARY KEY AUTOINCREMENT,
+    uuid            TEXT            NOT NULL DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
     client_id           BIGINT          NOT NULL,
     department_id       BIGINT,
     current_deadline    DATE            NOT NULL,
     new_deadline        DATE            NOT NULL,
     reason              VARCHAR(1000)   NOT NULL,
-    created_at          TIMESTAMPTZ     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at          TIMESTAMPTZ     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at          TEXT     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TEXT     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by          BIGINT,
     updated_by          BIGINT,
-    deleted             BOOLEAN         NOT NULL DEFAULT FALSE,
+    deleted             INTEGER         NOT NULL DEFAULT 0,
     status              VARCHAR(30)     NOT NULL DEFAULT 'ACTIVE',
     version             BIGINT          NOT NULL DEFAULT 0,
 
@@ -73,15 +68,10 @@ CREATE TABLE client_deadlines (
     CONSTRAINT chk_client_deadlines_status CHECK (status IN ('ACTIVE', 'INACTIVE'))
 );
 
-CREATE INDEX idx_client_deadlines_status ON client_deadlines (status) WHERE deleted = FALSE;
-CREATE INDEX idx_client_deadlines_client_id ON client_deadlines (client_id) WHERE deleted = FALSE;
-CREATE INDEX idx_client_deadlines_department_id ON client_deadlines (department_id) WHERE deleted = FALSE;
-CREATE INDEX idx_client_deadlines_current_deadline ON client_deadlines (current_deadline) WHERE deleted = FALSE;
-CREATE INDEX idx_client_deadlines_new_deadline ON client_deadlines (new_deadline) WHERE deleted = FALSE;
+CREATE INDEX idx_client_deadlines_status ON client_deadlines (status) WHERE deleted = 0;
+CREATE INDEX idx_client_deadlines_client_id ON client_deadlines (client_id) WHERE deleted = 0;
+CREATE INDEX idx_client_deadlines_department_id ON client_deadlines (department_id) WHERE deleted = 0;
+CREATE INDEX idx_client_deadlines_current_deadline ON client_deadlines (current_deadline) WHERE deleted = 0;
+CREATE INDEX idx_client_deadlines_new_deadline ON client_deadlines (new_deadline) WHERE deleted = 0;
 CREATE INDEX idx_client_deadlines_deleted ON client_deadlines (deleted);
 CREATE INDEX idx_client_deadlines_created_at ON client_deadlines (created_at);
-
-COMMENT ON TABLE client_deadlines IS 'Client project deadline change history';
-COMMENT ON COLUMN client_deadlines.current_deadline IS 'Previous / current deadline before change';
-COMMENT ON COLUMN client_deadlines.new_deadline IS 'Revised deadline after change';
-COMMENT ON COLUMN client_deadlines.reason IS 'Reason for deadline extension or change';

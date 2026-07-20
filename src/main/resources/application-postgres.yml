@@ -1,0 +1,27 @@
+spring:
+  config:
+    activate:
+      on-profile: postgres
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:just_catering_superadmin}
+    username: ${POSTGRES_USER:just_catering}
+    password: ${POSTGRES_PASSWORD:just_catering_secret}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: JustCateringHikariPool
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    locations: classpath:db/migration-postgresql

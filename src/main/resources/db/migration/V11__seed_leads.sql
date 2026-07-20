@@ -30,24 +30,14 @@ SELECT
     v.lead_stage,
     'ACTIVE'
 FROM (
-    VALUES
-        ('Rahul', 'Sharma', 'rahul.sharma@lead.in', 'Rahul Caterers', '+919822011223',
-         'Maharashtra', 'Mumbai', 150000.00, 'JUST_CATERING_ERP',
-         'Interested in ERP rollout for catering operations', 'NEW'),
-        ('Vivek', 'Soni', 'vivek.soni@lead.in', 'Blueleaf Foods', '+919811055221',
-         'Delhi', 'Delhi', 90000.00, 'JUST_RETAIL_POS',
-         'Exploring POS for retail outlets', 'CONTACTED'),
-        ('Ritesh', 'Sharma', 'ritesh.sharma@lead.in', 'Arya Interiors', '+919009071120',
-         'Gujarat', 'Ahmedabad', 250000.00, 'JUST_INTERIOR_CRM',
-         NULL, 'QUALIFIED'),
-        ('Pradeep', 'Patel', 'pradeep.patel@lead.in', 'Mango Event', '+919845520011',
-         'Karnataka', 'Bangalore', 100000.00, 'JUST_EVENT_PLANNER',
-         'Event planning demo requested', 'CONVERTED'),
-        ('Suraj', 'Patel', 'suraj.patel@lead.in', 'Suryodaya Textiles', '+919004033212',
-         'Gujarat', 'Surat', 60000.00, 'JUST_CATERING_X',
-         'Budget constraints; follow up next quarter', 'LOST')
-) AS v(
-    first_name, last_name, email, company_name, phone, state, city,
-    approx_budget, product_code, notes, lead_stage
-)
-LEFT JOIN products p ON p.code = v.product_code AND p.deleted = FALSE;
+    SELECT 'Rahul' AS first_name, 'Sharma' AS last_name, 'rahul.sharma@lead.in' AS email, 'Rahul Caterers' AS company_name, '+919822011223' AS phone, 'Maharashtra' AS state, 'Mumbai' AS city, 150000.00 AS approx_budget, 'JUST_CATERING_ERP' AS product_code, 'Interested in ERP rollout for catering operations' AS notes, 'NEW' AS lead_stage
+    UNION ALL
+    SELECT 'Vivek', 'Soni', 'vivek.soni@lead.in', 'Blueleaf Foods', '+919811055221', 'Delhi', 'Delhi', 90000.00, 'JUST_RETAIL_POS', 'Exploring POS for retail outlets', 'CONTACTED'
+    UNION ALL
+    SELECT 'Ritesh', 'Sharma', 'ritesh.sharma@lead.in', 'Arya Interiors', '+919009071120', 'Gujarat', 'Ahmedabad', 250000.00, 'JUST_INTERIOR_CRM', NULL, 'QUALIFIED'
+    UNION ALL
+    SELECT 'Pradeep', 'Patel', 'pradeep.patel@lead.in', 'Mango Event', '+919845520011', 'Karnataka', 'Bangalore', 100000.00, 'JUST_EVENT_PLANNER', 'Event planning demo requested', 'CONVERTED'
+    UNION ALL
+    SELECT 'Suraj', 'Patel', 'suraj.patel@lead.in', 'Suryodaya Textiles', '+919004033212', 'Gujarat', 'Surat', 60000.00, 'JUST_CATERING_X', 'Budget constraints; follow up next quarter', 'LOST'
+) v
+LEFT JOIN products p ON p.code = v.product_code AND p.deleted = 0;

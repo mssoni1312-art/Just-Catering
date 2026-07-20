@@ -24,14 +24,12 @@ SELECT
     v.remarks,
     'ACTIVE'
 FROM (
-    VALUES
-        ('rahul@caterers.in', 'INV-0231', DATE '2025-07-18', 50000.00, 'GPay', 'UPI',
-         'First installment for ERP rollout'),
-        ('hello@blueleaf.co', 'INV-0232', DATE '2025-07-17', 35000.00, 'HDFC', 'BANK_TRANSFER',
-         'Advance payment for POS setup'),
-        ('karan@bajajgroup.in', 'INV-0233', DATE '2025-07-16', 250000.00, 'ICICI', 'BANK_TRANSFER',
-         'Milestone 1 payment'),
-        ('sales@aryain.com', 'INV-0234', DATE '2025-07-15', 100000.00, 'Cash', 'CASH',
-         'On-site cash collection')
-) AS v(client_email, invoice_number, payment_date, amount, bank_type, payment_mode, remarks)
-JOIN clients c ON LOWER(c.email) = LOWER(v.client_email) AND c.deleted = FALSE;
+    SELECT 'rahul@caterers.in' AS client_email, 'INV-0231' AS invoice_number, '2025-07-18' AS payment_date, 50000.00 AS amount, 'GPay' AS bank_type, 'UPI' AS payment_mode, 'First installment for ERP rollout' AS remarks
+    UNION ALL
+    SELECT 'hello@blueleaf.co', 'INV-0232', '2025-07-17', 35000.00, 'HDFC', 'BANK_TRANSFER', 'Advance payment for POS setup'
+    UNION ALL
+    SELECT 'karan@bajajgroup.in', 'INV-0233', '2025-07-16', 250000.00, 'ICICI', 'BANK_TRANSFER', 'Milestone 1 payment'
+    UNION ALL
+    SELECT 'sales@aryain.com', 'INV-0234', '2025-07-15', 100000.00, 'Cash', 'CASH', 'On-site cash collection'
+) v
+JOIN clients c ON LOWER(c.email) = LOWER(v.client_email) AND c.deleted = 0;

@@ -4,12 +4,12 @@ Enterprise Spring Boot backend for the Just Catering SuperAdmin platform.
 
 ## Stack
 
-- Java 21 · Spring Boot 3.3 · Spring Security + JWT · JPA/Hibernate · PostgreSQL 16 · Flyway · MapStruct · SpringDoc
+- Java 21 · Spring Boot 3.3 · Spring Security + JWT · JPA/Hibernate · SQLite · Flyway · MapStruct · SpringDoc
 
 ## Quick Start
 
 ```bash
-docker compose up -d
+mkdir -p data
 export JAVA_HOME=/opt/homebrew/opt/openjdk@21
 mvn spring-boot:run
 ```
@@ -18,10 +18,19 @@ mvn spring-boot:run
 |---------|-----|
 | API | http://localhost:8080 |
 | Swagger | http://localhost:8080/swagger-ui.html |
-| Postgres | localhost:5432 |
-| pgAdmin | http://localhost:5050 |
+| SQLite DB | `./data/just_catering_superadmin.db` |
 
 **Super Admin:** `admin@justcatering.com` / `Admin@12345`
+
+### Optional: PostgreSQL
+
+To use PostgreSQL instead of SQLite:
+
+```bash
+docker compose up -d
+export SPRING_PROFILES_ACTIVE=postgres,dev
+mvn spring-boot:run
+```
 
 ## Complete Module Map (Figma → API)
 

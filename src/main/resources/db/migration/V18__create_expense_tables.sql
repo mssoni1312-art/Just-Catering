@@ -4,8 +4,8 @@
 -- =============================================================================
 
 CREATE TABLE expenses (
-    id                      BIGSERIAL       PRIMARY KEY,
-    uuid                    UUID            NOT NULL DEFAULT gen_random_uuid(),
+    id                      INTEGER       PRIMARY KEY AUTOINCREMENT,
+    uuid            TEXT            NOT NULL DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
     client_id               BIGINT,
     title                   VARCHAR(200)    NOT NULL,
     expense_type            VARCHAR(30)     NOT NULL,
@@ -23,11 +23,11 @@ CREATE TABLE expenses (
     account_contact         VARCHAR(200),
     remarks                 VARCHAR(1000),
     bill_url                VARCHAR(500),
-    created_at              TIMESTAMPTZ     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at              TIMESTAMPTZ     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at              TEXT     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at              TEXT     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by              BIGINT,
     updated_by              BIGINT,
-    deleted                 BOOLEAN         NOT NULL DEFAULT FALSE,
+    deleted                 INTEGER         NOT NULL DEFAULT 0,
     status                  VARCHAR(30)     NOT NULL DEFAULT 'ACTIVE',
     version                 BIGINT          NOT NULL DEFAULT 0,
 
@@ -44,17 +44,12 @@ CREATE TABLE expenses (
     CONSTRAINT chk_expenses_km CHECK (km IS NULL OR km >= 0)
 );
 
-CREATE INDEX idx_expenses_status ON expenses (status) WHERE deleted = FALSE;
-CREATE INDEX idx_expenses_client_id ON expenses (client_id) WHERE deleted = FALSE;
-CREATE INDEX idx_expenses_member_user_id ON expenses (member_user_id) WHERE deleted = FALSE;
-CREATE INDEX idx_expenses_type ON expenses (expense_type) WHERE deleted = FALSE;
-CREATE INDEX idx_expenses_expense_date ON expenses (expense_date) WHERE deleted = FALSE;
-CREATE INDEX idx_expenses_paid_date ON expenses (paid_date) WHERE deleted = FALSE;
-CREATE INDEX idx_expenses_due_date ON expenses (due_date) WHERE deleted = FALSE;
+CREATE INDEX idx_expenses_status ON expenses (status) WHERE deleted = 0;
+CREATE INDEX idx_expenses_client_id ON expenses (client_id) WHERE deleted = 0;
+CREATE INDEX idx_expenses_member_user_id ON expenses (member_user_id) WHERE deleted = 0;
+CREATE INDEX idx_expenses_type ON expenses (expense_type) WHERE deleted = 0;
+CREATE INDEX idx_expenses_expense_date ON expenses (expense_date) WHERE deleted = 0;
+CREATE INDEX idx_expenses_paid_date ON expenses (paid_date) WHERE deleted = 0;
+CREATE INDEX idx_expenses_due_date ON expenses (due_date) WHERE deleted = 0;
 CREATE INDEX idx_expenses_deleted ON expenses (deleted);
 CREATE INDEX idx_expenses_created_at ON expenses (created_at);
-
-COMMENT ON TABLE expenses IS 'Business expenses (travel, food, office, other)';
-COMMENT ON COLUMN expenses.client_id IS 'Optional client link; null for office-wide expenses';
-COMMENT ON COLUMN expenses.member_user_id IS 'Claimant / team member who incurred the expense';
-COMMENT ON COLUMN expenses.expense_type IS 'Expense category (TRAVEL, FOOD, OFFICE, OTHER)';

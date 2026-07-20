@@ -4,8 +4,8 @@
 -- =============================================================================
 
 CREATE TABLE leads (
-    id              BIGSERIAL       PRIMARY KEY,
-    uuid            UUID            NOT NULL DEFAULT gen_random_uuid(),
+    id              INTEGER       PRIMARY KEY AUTOINCREMENT,
+    uuid            TEXT            NOT NULL DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
     first_name      VARCHAR(100)    NOT NULL,
     last_name       VARCHAR(100)    NOT NULL,
     email           VARCHAR(255)    NOT NULL,
@@ -17,11 +17,11 @@ CREATE TABLE leads (
     product_id      BIGINT,
     notes           VARCHAR(1000),
     lead_stage      VARCHAR(30)     NOT NULL DEFAULT 'NEW',
-    created_at      TIMESTAMPTZ     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMPTZ     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at      TEXT     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TEXT     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by      BIGINT,
     updated_by      BIGINT,
-    deleted         BOOLEAN         NOT NULL DEFAULT FALSE,
+    deleted         INTEGER         NOT NULL DEFAULT 0,
     status          VARCHAR(30)     NOT NULL DEFAULT 'ACTIVE',
     version         BIGINT          NOT NULL DEFAULT 0,
 
@@ -37,18 +37,14 @@ CREATE TABLE leads (
 
 CREATE UNIQUE INDEX uq_leads_email_active
     ON leads (LOWER(email))
-    WHERE deleted = FALSE;
+    WHERE deleted = 0;
 
-CREATE INDEX idx_leads_status ON leads (status) WHERE deleted = FALSE;
-CREATE INDEX idx_leads_stage ON leads (lead_stage) WHERE deleted = FALSE;
-CREATE INDEX idx_leads_product_id ON leads (product_id) WHERE deleted = FALSE;
-CREATE INDEX idx_leads_company_name ON leads (company_name) WHERE deleted = FALSE;
-CREATE INDEX idx_leads_phone ON leads (phone) WHERE deleted = FALSE;
-CREATE INDEX idx_leads_state ON leads (state) WHERE deleted = FALSE;
-CREATE INDEX idx_leads_city ON leads (city) WHERE deleted = FALSE;
+CREATE INDEX idx_leads_status ON leads (status) WHERE deleted = 0;
+CREATE INDEX idx_leads_stage ON leads (lead_stage) WHERE deleted = 0;
+CREATE INDEX idx_leads_product_id ON leads (product_id) WHERE deleted = 0;
+CREATE INDEX idx_leads_company_name ON leads (company_name) WHERE deleted = 0;
+CREATE INDEX idx_leads_phone ON leads (phone) WHERE deleted = 0;
+CREATE INDEX idx_leads_state ON leads (state) WHERE deleted = 0;
+CREATE INDEX idx_leads_city ON leads (city) WHERE deleted = 0;
 CREATE INDEX idx_leads_deleted ON leads (deleted);
 CREATE INDEX idx_leads_created_at ON leads (created_at);
-
-COMMENT ON TABLE leads IS 'Meeting leads / sales pipeline prospects';
-COMMENT ON COLUMN leads.lead_stage IS 'Sales pipeline stage (NEW, CONTACTED, QUALIFIED, CONVERTED, LOST)';
-COMMENT ON COLUMN leads.approx_budget IS 'Approximate budget indicated by the lead';

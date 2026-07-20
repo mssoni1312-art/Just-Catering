@@ -4,18 +4,18 @@
 -- =============================================================================
 
 CREATE TABLE products (
-    id                      BIGSERIAL       PRIMARY KEY,
-    uuid                    UUID            NOT NULL DEFAULT gen_random_uuid(),
+    id                      INTEGER       PRIMARY KEY AUTOINCREMENT,
+    uuid            TEXT            NOT NULL DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
     name                    VARCHAR(150)    NOT NULL,
     code                    VARCHAR(50)     NOT NULL,
     product_type            VARCHAR(100)    NOT NULL,
     description             VARCHAR(500),
     default_reward_amount   NUMERIC(12, 2)  NOT NULL DEFAULT 0.00,
-    created_at              TIMESTAMPTZ     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at              TIMESTAMPTZ     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at              TEXT     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at              TEXT     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by              BIGINT,
     updated_by              BIGINT,
-    deleted                 BOOLEAN         NOT NULL DEFAULT FALSE,
+    deleted                 INTEGER         NOT NULL DEFAULT 0,
     status                  VARCHAR(30)     NOT NULL DEFAULT 'ACTIVE',
     version                 BIGINT          NOT NULL DEFAULT 0,
 
@@ -27,13 +27,9 @@ CREATE TABLE products (
 
 CREATE UNIQUE INDEX uq_products_name_type_active
     ON products (LOWER(name), LOWER(product_type))
-    WHERE deleted = FALSE;
+    WHERE deleted = 0;
 
-CREATE INDEX idx_products_status ON products (status) WHERE deleted = FALSE;
-CREATE INDEX idx_products_type ON products (product_type) WHERE deleted = FALSE;
-CREATE INDEX idx_products_name ON products (name) WHERE deleted = FALSE;
+CREATE INDEX idx_products_status ON products (status) WHERE deleted = 0;
+CREATE INDEX idx_products_type ON products (product_type) WHERE deleted = 0;
+CREATE INDEX idx_products_name ON products (name) WHERE deleted = 0;
 CREATE INDEX idx_products_deleted ON products (deleted);
-
-COMMENT ON TABLE products IS 'Sellable product catalog (Just Catering X, Pro, etc.)';
-COMMENT ON COLUMN products.product_type IS 'Product family/type shown in Figma Type field';
-COMMENT ON COLUMN products.default_reward_amount IS 'Default reward amount from Settings reward rules';
