@@ -1,7 +1,6 @@
 package com.justcatering.superadmin.config;
 
 import jakarta.persistence.AttributeConverter;
-import jakarta.persistence.Converter;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -9,20 +8,13 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
 /**
  * Stores {@link Instant} values as ISO-8601 text in SQLite.
  * <p>
- * Hibernate's default SQLite mapping writes epoch milliseconds, which the SQLite
- * JDBC driver cannot read back as timestamps. This converter also tolerates
- * legacy millis values and Flyway seed timestamps ({@code yyyy-MM-dd HH:mm:ss}).
+ * Registered only for SQLite via {@link SqliteMetadataBuilderContributor}.
  * </p>
  */
-@Component
-@Profile("!postgres")
-@Converter(autoApply = true)
 public class SqliteInstantConverter implements AttributeConverter<Instant, String> {
 
     private static final DateTimeFormatter SQLITE_TIMESTAMP = new DateTimeFormatterBuilder()
