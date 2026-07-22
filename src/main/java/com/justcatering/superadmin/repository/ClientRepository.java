@@ -3,6 +3,7 @@ package com.justcatering.superadmin.repository;
 import com.justcatering.superadmin.entity.Client;
 import com.justcatering.superadmin.enums.EntityStatus;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -105,6 +106,82 @@ public interface ClientRepository
             WHERE c.deleted = FALSE
             """)
     BigDecimal sumBudgetByDeletedFalse();
+
+    /**
+     * Counts clients belonging to a calendar month.
+     * Prefers deal date; falls back to created-at when deal date is missing.
+     *
+     * @param fromDate      inclusive deal-date start
+     * @param toDate        inclusive deal-date end
+     * @param fromInclusive inclusive created-at start
+     * @param toExclusive   exclusive created-at end
+     * @return client count
+     */
+    @Query("""
+            SELECT COUNT(c)
+            FROM Client c
+            WHERE c.deleted = FALSE
+              AND (
+                    (c.dealDate IS NOT NULL AND c.dealDate >= :fromDate AND c.dealDate <= :toDate)
+                 OR (c.dealDate IS NULL AND c.createdAt >= :fromInclusive AND c.createdAt < :toExclusive)
+              )
+            """)
+    long countInPeriod(
+            @Param("fromDate") LocalDate fromDate,
+            @Param("toDate") LocalDate toDate,
+            @Param("fromInclusive") Instant fromInclusive,
+            @Param("toExclusive") Instant toExclusive
+    );
+
+    /**
+     * Sums deal amounts for clients in a calendar month.
+     *
+     * @param fromDate      inclusive deal-date start
+     * @param toDate        inclusive deal-date end
+     * @param fromInclusive inclusive created-at start
+     * @param toExclusive   exclusive created-at end
+     * @return total deal amount
+     */
+    @Query("""
+            SELECT COALESCE(SUM(c.totalAmount), 0)
+            FROM Client c
+            WHERE c.deleted = FALSE
+              AND (
+                    (c.dealDate IS NOT NULL AND c.dealDate >= :fromDate AND c.dealDate <= :toDate)
+                 OR (c.dealDate IS NULL AND c.createdAt >= :fromInclusive AND c.createdAt < :toExclusive)
+              )
+            """)
+    BigDecimal sumTotalAmountInPeriod(
+            @Param("fromDate") LocalDate fromDate,
+            @Param("toDate") LocalDate toDate,
+            @Param("fromInclusive") Instant fromInclusive,
+            @Param("toExclusive") Instant toExclusive
+    );
+
+    /**
+     * Sums project budgets for clients in a calendar month.
+     *
+     * @param fromDate      inclusive deal-date start
+     * @param toDate        inclusive deal-date end
+     * @param fromInclusive inclusive created-at start
+     * @param toExclusive   exclusive created-at end
+     * @return total project budget
+     */
+    @Query("""
+            SELECT COALESCE(SUM(COALESCE(c.budget, c.totalAmount, 0)), 0)
+            FROM Client c
+            WHERE c.deleted = FALSE
+              AND (
+                    (c.dealDate IS NOT NULL AND c.dealDate >= :fromDate AND c.dealDate <= :toDate)
+                 OR (c.dealDate IS NULL AND c.createdAt >= :fromInclusive AND c.createdAt < :toExclusive)
+              )
+            """)
+    BigDecimal sumBudgetInPeriod(
+            @Param("fromDate") LocalDate fromDate,
+            @Param("toDate") LocalDate toDate,
+            @Param("fromInclusive") Instant fromInclusive,
+            @Param("toExclusive") Instant toExclusive
+    );
 
     /**
      * Finds clients with a deal date inside the given inclusive range.

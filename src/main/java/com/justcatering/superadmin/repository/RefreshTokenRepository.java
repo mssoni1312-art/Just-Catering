@@ -1,6 +1,7 @@
 package com.justcatering.superadmin.repository;
 
 import com.justcatering.superadmin.entity.RefreshToken;
+import java.time.Instant;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -29,20 +30,24 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     Optional<RefreshToken> findByTokenAndDeletedFalse(@Param("token") String token);
 
     /**
-     * Revokes all active refresh tokens for a user.
+     * Revokes all active refresh tokens for a user at the current instant.
      *
      * @param userId user id
      * @return number of updated rows
      */
+    default int revokeAllActiveByUserId(Long userId) {
+        return revokeAllActiveByUserId(userId, Instant.now());
+    }
+
     @Modifying(clearAutomatically = true)
     @Query("""
             UPDATE RefreshToken rt
             SET rt.revoked = TRUE,
-                rt.revokedAt = CURRENT_TIMESTAMP,
+                rt.revokedAt = :revokedAt,
                 rt.status = com.justcatering.superadmin.enums.EntityStatus.REVOKED
             WHERE rt.user.id = :userId
               AND rt.revoked = FALSE
               AND rt.deleted = FALSE
             """)
-    int revokeAllActiveByUserId(@Param("userId") Long userId);
+    int revokeAllActiveByUserId(@Param("userId") Long userId, @Param("revokedAt") Instant revokedAt);
 }

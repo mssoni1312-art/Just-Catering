@@ -68,6 +68,7 @@ public interface ClientQueryService {
             UUID clientUuid,
             UUID assignedUserUuid,
             UUID departmentUuid,
+            String queryType,
             Pageable pageable
     );
 

@@ -21,6 +21,7 @@ import com.justcatering.superadmin.repository.UserRoleEntityRepository;
 import com.justcatering.superadmin.security.UserPrincipal;
 import com.justcatering.superadmin.service.UserService;
 import com.justcatering.superadmin.specification.UserSpecification;
+import com.justcatering.superadmin.util.UuidLegacyCodec;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.time.Instant;
@@ -69,7 +70,7 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException("Email already registered", "USER_EMAIL_EXISTS");
         }
 
-        Set<Role> roles = resolveRoles(request.getRoleUuids());
+        Set<Role> roles = resolveRoles(collectRoleIdentifiers(request.getRoleUuids(), request.getRoleCode()));
         EntityStatus status = request.getStatus() != null ? request.getStatus() : EntityStatus.ACTIVE;
 
         User user = User.builder()
@@ -100,7 +101,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDetailsResponse update(UUID uuid, UserUpdateRequest request) {
         User user = findUserOrThrow(uuid);
-        preventSelfDemotionOrLock(user, request.getStatus(), request.getRoleUuids());
+        preventSelfDemotionOrLock(user, request.getStatus(), collectRoleIdentifiers(
+                request.getRoleUuids(),
+                request.getRoleCode()
+        ));
 
         user.setFirstName(request.getFirstName().trim());
         user.setLastName(request.getLastName().trim());
@@ -115,7 +119,7 @@ public class UserServiceImpl implements UserService {
         }
 
         userRepository.save(user);
-        replaceRoles(user, resolveRoles(request.getRoleUuids()));
+        replaceRoles(user, resolveRoles(collectRoleIdentifiers(request.getRoleUuids(), request.getRoleCode())));
 
         if (user.getStatus() != EntityStatus.ACTIVE) {
             refreshTokenRepository.revokeAllActiveByUserId(user.getId());
@@ -221,18 +225,74 @@ public class UserServiceImpl implements UserService {
         assignRoles(user, roles);
     }
 
-    private Set<Role> resolveRoles(Set<UUID> roleUuids) {
-        List<Role> roles = roleRepository.findByUuidInAndDeletedFalse(roleUuids);
-        if (roles.size() != roleUuids.size()) {
+    private Set<String> collectRoleIdentifiers(Set<String> roleUuids, String roleCode) {
+        Set<String> identifiers = new HashSet<>();
+        if (roleUuids != null) {
+            roleUuids.stream()
+                    .filter(value -> value != null && !value.isBlank())
+                    .map(String::trim)
+                    .forEach(identifiers::add);
+        }
+        if (roleCode != null && !roleCode.isBlank()) {
+            identifiers.add(roleCode.trim());
+        }
+        return identifiers;
+    }
+
+    private Set<Role> resolveRoles(Set<String> roleIdentifiers) {
+        if (roleIdentifiers == null || roleIdentifiers.isEmpty()) {
             throw new EntityNotFoundException("One or more roles were not found");
         }
+
+        Set<Role> roles = new HashSet<>();
+        for (String identifier : roleIdentifiers) {
+            roles.add(resolveRole(identifier));
+        }
+
         Set<Role> inactive = roles.stream()
                 .filter(role -> role.getStatus() != EntityStatus.ACTIVE)
                 .collect(Collectors.toSet());
         if (!inactive.isEmpty()) {
             throw new BusinessException("Cannot assign inactive roles");
         }
-        return new HashSet<>(roles);
+        return roles;
+    }
+
+    private Role resolveRole(String identifier) {
+        if (identifier == null || identifier.isBlank()) {
+            throw new EntityNotFoundException("One or more roles were not found");
+        }
+
+        String trimmed = identifier.trim();
+
+        try {
+            Role role = roleRepository.findByUuidAndDeletedFalse(UUID.fromString(trimmed)).orElse(null);
+            if (role != null) {
+                return role;
+            }
+        } catch (IllegalArgumentException ignored) {
+            // Not a UUID; continue with code/name lookup.
+        }
+
+        Role role = roleRepository.findByCodeAndDeletedFalse(trimmed.toUpperCase()).orElse(null);
+        if (role != null) {
+            return role;
+        }
+
+        role = roleRepository.findByNameIgnoreCaseAndDeletedFalse(trimmed).orElse(null);
+        if (role != null) {
+            return role;
+        }
+
+        role = roleRepository.findByDeletedFalseAndStatusOrderByNameAsc(EntityStatus.ACTIVE).stream()
+                .filter(candidate -> UuidLegacyCodec.matchesLegacyCorruptedUuid(trimmed, candidate.getUuid()))
+                .findFirst()
+                .orElse(null);
+        if (role != null) {
+            return role;
+        }
+
+        throw new EntityNotFoundException("One or more roles were not found");
     }
 
     private User findUserOrThrow(UUID uuid) {
@@ -252,7 +312,7 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    private void preventSelfDemotionOrLock(User user, EntityStatus status, Set<UUID> roleUuids) {
+    private void preventSelfDemotionOrLock(User user, EntityStatus status, Set<String> roleIdentifiers) {
         UserPrincipal principal = currentPrincipalOrNull();
         if (principal == null || !principal.getId().equals(user.getId())) {
             return;
@@ -260,7 +320,7 @@ public class UserServiceImpl implements UserService {
         if (status != null && status != EntityStatus.ACTIVE) {
             throw new BusinessException("You cannot deactivate or lock your own account");
         }
-        Set<Role> roles = resolveRoles(roleUuids);
+        Set<Role> roles = resolveRoles(roleIdentifiers);
         boolean stillSuperAdmin = roles.stream()
                 .anyMatch(role -> AppConstants.ROLE_SUPER_ADMIN.equals(role.getCode()));
         if (!stillSuperAdmin && user.getActiveRoles().stream()

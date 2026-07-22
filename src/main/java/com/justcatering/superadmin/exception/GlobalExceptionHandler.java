@@ -15,6 +15,7 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -111,6 +112,27 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(ApiResponse.failure("Access denied", HttpStatus.FORBIDDEN.value()));
+    }
+
+    /**
+     * Handles unsupported HTTP methods (e.g. PUT on a GET-only route).
+     *
+     * @param ex      method-not-supported exception
+     * @param request HTTP request
+     * @return method not allowed response
+     */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException ex,
+            HttpServletRequest request
+    ) {
+        log.warn("Unsupported method {} on {}", ex.getMethod(), request.getRequestURI());
+        return ResponseEntity
+                .status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(ApiResponse.failure(
+                        "HTTP method " + ex.getMethod() + " is not supported for this endpoint",
+                        HttpStatus.METHOD_NOT_ALLOWED.value()
+                ));
     }
 
     /**

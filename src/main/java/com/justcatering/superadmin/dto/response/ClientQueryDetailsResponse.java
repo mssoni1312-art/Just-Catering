@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Client query details response.
+ * Client query / requirement details response.
  */
 @Getter
 @Setter
@@ -23,6 +23,8 @@ public class ClientQueryDetailsResponse {
 
     private UUID uuid;
     private String title;
+    private String description;
+    private String notes;
     private String queryType;
     private ClientDropdownResponse client;
     private UserDropdownResponse assignedUser;
@@ -31,6 +33,11 @@ public class ClientQueryDetailsResponse {
     private QueryStatus queryStatus;
     private String remarks;
     private String imageUrl;
+    private Instant dueDate;
+    private Instant occurredAt;
+    private Boolean hasCheckInOut;
+    private RequirementVoiceNoteResponse voiceNote;
+    private RequirementDocumentResponse document;
     private Instant completedAt;
     private EntityStatus status;
     private Instant createdAt;

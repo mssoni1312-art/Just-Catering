@@ -22,11 +22,11 @@ import lombok.Setter;
 public class LeadDetailsResponse {
 
     private UUID uuid;
-    private String firstName;
-    private String lastName;
+    private String ownerName;
     private String email;
     private String companyName;
     private String phone;
+    private String address;
     private String state;
     private String city;
     private BigDecimal approxBudget;

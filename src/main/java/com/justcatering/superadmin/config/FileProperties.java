@@ -31,13 +31,20 @@ public class FileProperties {
             "application/pdf,application/msword,"
                     + "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
+    /** Comma-separated allowed audio MIME types for voice recordings. */
+    private String allowedAudioTypes =
+            "audio/mpeg,audio/mp4,audio/x-m4a,audio/m4a,audio/aac,audio/wav,audio/x-wav,"
+                    + "audio/webm,audio/ogg,audio/x-caf,audio/caf";
+
     /**
-     * Returns all allowed MIME types (images and documents).
+     * Returns all allowed MIME types (images, documents, and audio).
      *
      * @return allowed content types
      */
     public Set<String> getAllowedContentTypes() {
-        return Arrays.stream((allowedImageTypes + "," + allowedDocumentTypes).split(","))
+        return Arrays.stream(
+                        (allowedImageTypes + "," + allowedDocumentTypes + "," + allowedAudioTypes).split(",")
+                )
                 .map(String::trim)
                 .filter(type -> !type.isEmpty())
                 .collect(Collectors.toUnmodifiableSet());

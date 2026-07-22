@@ -57,13 +57,22 @@ public class ClientQueryServiceImpl implements ClientQueryService {
         ClientQuery clientQuery = ClientQuery.builder()
                 .client(resolveActiveClient(request.getClientUuid()))
                 .title(request.getTitle().trim())
+                .description(normalizeOptional(request.getDescription()))
                 .queryType(normalizeOptional(request.getQueryType()))
                 .assignedUser(resolveOptionalUser(request.getAssignedUserUuid()))
                 .department(resolveOptionalDepartment(request.getDepartmentUuid()))
                 .priority(request.getPriority() != null ? request.getPriority() : Priority.MEDIUM)
                 .queryStatus(queryStatus)
-                .remarks(normalizeOptional(request.getRemarks()))
+                .remarks(resolveNotes(request))
                 .imageUrl(normalizeOptional(request.getImageUrl()))
+                .scheduledAt(resolveScheduledAt(request.getDueDate(), request.getOccurredAt()))
+                .hasCheckInOut(Boolean.TRUE.equals(request.getHasCheckInOut()))
+                .voiceUrl(normalizeOptional(request.getVoiceUrl()))
+                .voiceDurationSeconds(request.getVoiceDurationSeconds())
+                .documentUrl(normalizeOptional(request.getDocumentUrl()))
+                .documentName(normalizeOptional(request.getDocumentName()))
+                .documentSizeBytes(request.getDocumentSizeBytes())
+                .documentContentType(normalizeOptional(request.getDocumentContentType()))
                 .completedAt(resolveCompletedAt(queryStatus, request.getCompletedAt()))
                 .status(request.getStatus() != null ? request.getStatus() : EntityStatus.ACTIVE)
                 .deleted(Boolean.FALSE)
@@ -83,6 +92,7 @@ public class ClientQueryServiceImpl implements ClientQueryService {
 
         clientQuery.setClient(resolveActiveClient(request.getClientUuid()));
         clientQuery.setTitle(request.getTitle().trim());
+        clientQuery.setDescription(normalizeOptional(request.getDescription()));
         clientQuery.setQueryType(normalizeOptional(request.getQueryType()));
         clientQuery.setAssignedUser(resolveOptionalUser(request.getAssignedUserUuid()));
         clientQuery.setDepartment(resolveOptionalDepartment(request.getDepartmentUuid()));
@@ -95,8 +105,18 @@ public class ClientQueryServiceImpl implements ClientQueryService {
         } else if (request.getCompletedAt() != null) {
             clientQuery.setCompletedAt(request.getCompletedAt());
         }
-        clientQuery.setRemarks(normalizeOptional(request.getRemarks()));
+        clientQuery.setRemarks(resolveNotes(request));
         clientQuery.setImageUrl(normalizeOptional(request.getImageUrl()));
+        clientQuery.setScheduledAt(resolveScheduledAt(request.getDueDate(), request.getOccurredAt()));
+        if (request.getHasCheckInOut() != null) {
+            clientQuery.setHasCheckInOut(request.getHasCheckInOut());
+        }
+        clientQuery.setVoiceUrl(normalizeOptional(request.getVoiceUrl()));
+        clientQuery.setVoiceDurationSeconds(request.getVoiceDurationSeconds());
+        clientQuery.setDocumentUrl(normalizeOptional(request.getDocumentUrl()));
+        clientQuery.setDocumentName(normalizeOptional(request.getDocumentName()));
+        clientQuery.setDocumentSizeBytes(request.getDocumentSizeBytes());
+        clientQuery.setDocumentContentType(normalizeOptional(request.getDocumentContentType()));
         if (request.getStatus() != null) {
             clientQuery.setStatus(request.getStatus());
         }
@@ -138,11 +158,12 @@ public class ClientQueryServiceImpl implements ClientQueryService {
             UUID clientUuid,
             UUID assignedUserUuid,
             UUID departmentUuid,
+            String queryType,
             Pageable pageable
     ) {
         Page<ClientQuery> page = clientQueryRepository.findAll(
                 ClientQuerySpecification.filter(
-                        search, queryStatus, priority, clientUuid, assignedUserUuid, departmentUuid
+                        search, queryStatus, priority, clientUuid, assignedUserUuid, departmentUuid, queryType
                 ),
                 pageable
         );
@@ -204,6 +225,18 @@ public class ClientQueryServiceImpl implements ClientQueryService {
 
     private boolean isTerminalStatus(QueryStatus queryStatus) {
         return queryStatus == QueryStatus.COMPLETED || queryStatus == QueryStatus.SOLVED;
+    }
+
+    private Instant resolveScheduledAt(Instant dueDate, Instant occurredAt) {
+        return dueDate != null ? dueDate : occurredAt;
+    }
+
+    private String resolveNotes(ClientQueryCreateRequest request) {
+        return normalizeOptional(request.getNotes() != null ? request.getNotes() : request.getRemarks());
+    }
+
+    private String resolveNotes(ClientQueryUpdateRequest request) {
+        return normalizeOptional(request.getNotes() != null ? request.getNotes() : request.getRemarks());
     }
 
     private ClientQuery findOrThrow(UUID uuid) {

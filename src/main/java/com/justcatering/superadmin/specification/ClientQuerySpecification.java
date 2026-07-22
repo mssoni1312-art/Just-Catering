@@ -29,6 +29,7 @@ public final class ClientQuerySpecification {
      * @param clientUuid       client UUID filter
      * @param assignedUserUuid assigned user UUID filter
      * @param departmentUuid   department UUID filter
+     * @param queryType        query type filter
      * @return specification
      */
     public static Specification<ClientQuery> filter(
@@ -37,11 +38,13 @@ public final class ClientQuerySpecification {
             Priority priority,
             UUID clientUuid,
             UUID assignedUserUuid,
-            UUID departmentUuid
+            UUID departmentUuid,
+            String queryType
     ) {
         return (root, query, cb) -> {
             if (ClientQuery.class.equals(query.getResultType())) {
-                root.fetch("client", JoinType.LEFT);
+                var client = root.fetch("client", JoinType.LEFT);
+                client.fetch("product", JoinType.LEFT);
                 root.fetch("assignedUser", JoinType.LEFT);
                 root.fetch("department", JoinType.LEFT);
                 query.distinct(true);
@@ -54,8 +57,10 @@ public final class ClientQuerySpecification {
                 String pattern = "%" + search.trim().toLowerCase() + "%";
                 predicates.add(cb.or(
                         cb.like(cb.lower(root.get("title")), pattern),
+                        cb.like(cb.lower(cb.coalesce(root.get("description"), "")), pattern),
                         cb.like(cb.lower(cb.coalesce(root.get("queryType"), "")), pattern),
                         cb.like(cb.lower(cb.coalesce(root.get("remarks"), "")), pattern),
+                        cb.like(cb.lower(cb.coalesce(root.get("documentName"), "")), pattern),
                         cb.like(cb.lower(root.get("client").get("clientName")), pattern),
                         cb.like(cb.lower(cb.coalesce(root.get("client").get("email"), "")), pattern),
                         cb.like(
@@ -91,6 +96,9 @@ public final class ClientQuerySpecification {
             }
             if (departmentUuid != null) {
                 predicates.add(cb.equal(root.get("department").get("uuid"), departmentUuid));
+            }
+            if (StringUtils.hasText(queryType)) {
+                predicates.add(cb.equal(cb.lower(root.get("queryType")), queryType.trim().toLowerCase()));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

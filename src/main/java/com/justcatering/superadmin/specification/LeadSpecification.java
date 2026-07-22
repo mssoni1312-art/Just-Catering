@@ -60,9 +60,10 @@ public final class LeadSpecification {
                 predicates.add(cb.or(
                         cb.like(cb.lower(root.get("firstName")), pattern),
                         cb.like(cb.lower(root.get("lastName")), pattern),
-                        cb.like(cb.lower(root.get("email")), pattern),
+                        cb.like(cb.lower(cb.coalesce(root.get("email"), "")), pattern),
                         cb.like(cb.lower(root.get("companyName")), pattern),
                         cb.like(cb.lower(root.get("phone")), pattern),
+                        cb.like(cb.lower(root.get("address")), pattern),
                         cb.like(cb.lower(root.get("state")), pattern),
                         cb.like(cb.lower(root.get("city")), pattern),
                         cb.like(cb.lower(cb.coalesce(product.get("name"), "")), pattern)

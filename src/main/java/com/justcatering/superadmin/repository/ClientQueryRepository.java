@@ -3,6 +3,7 @@ package com.justcatering.superadmin.repository;
 import com.justcatering.superadmin.entity.ClientQuery;
 import com.justcatering.superadmin.enums.EntityStatus;
 import com.justcatering.superadmin.enums.QueryStatus;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +38,7 @@ public interface ClientQueryRepository
     @Query("""
             SELECT q FROM ClientQuery q
             JOIN FETCH q.client c
+            LEFT JOIN FETCH c.product p
             LEFT JOIN FETCH q.assignedUser u
             LEFT JOIN FETCH q.department d
             WHERE q.uuid = :uuid
@@ -66,4 +68,45 @@ public interface ClientQueryRepository
      * @return query count
      */
     long countByDeletedFalseAndQueryStatusIn(Collection<QueryStatus> statuses);
+
+    /**
+     * Counts non-deleted queries created within an instant range.
+     *
+     * @param fromInclusive inclusive start instant
+     * @param toExclusive   exclusive end instant
+     * @return query count
+     */
+    @Query("""
+            SELECT COUNT(q)
+            FROM ClientQuery q
+            WHERE q.deleted = FALSE
+              AND q.createdAt >= :fromInclusive
+              AND q.createdAt < :toExclusive
+            """)
+    long countCreatedBetween(
+            @Param("fromInclusive") Instant fromInclusive,
+            @Param("toExclusive") Instant toExclusive
+    );
+
+    /**
+     * Counts non-deleted queries created within a range and matching statuses.
+     *
+     * @param statuses      query statuses
+     * @param fromInclusive inclusive start instant
+     * @param toExclusive   exclusive end instant
+     * @return query count
+     */
+    @Query("""
+            SELECT COUNT(q)
+            FROM ClientQuery q
+            WHERE q.deleted = FALSE
+              AND q.queryStatus IN :statuses
+              AND q.createdAt >= :fromInclusive
+              AND q.createdAt < :toExclusive
+            """)
+    long countCreatedBetweenAndQueryStatusIn(
+            @Param("statuses") Collection<QueryStatus> statuses,
+            @Param("fromInclusive") Instant fromInclusive,
+            @Param("toExclusive") Instant toExclusive
+    );
 }

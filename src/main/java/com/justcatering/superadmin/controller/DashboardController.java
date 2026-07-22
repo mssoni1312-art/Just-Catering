@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -30,13 +31,18 @@ public class DashboardController {
     /**
      * Returns aggregated dashboard overview metrics.
      *
+     * @param month optional month filter (1-12); requires {@code year}
+     * @param year  optional year filter; requires {@code month}
      * @return overview counts and amounts
      */
     @GetMapping("/overview")
     @PreAuthorize("hasAuthority('DASHBOARD_VIEW')")
-    @Operation(summary = "Get dashboard overview")
-    public ResponseEntity<ApiResponse<DashboardOverviewResponse>> getOverview() {
-        DashboardOverviewResponse data = dashboardService.getOverview();
+    @Operation(summary = "Get dashboard overview (optionally filtered by month and year)")
+    public ResponseEntity<ApiResponse<DashboardOverviewResponse>> getOverview(
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year
+    ) {
+        DashboardOverviewResponse data = dashboardService.getOverview(month, year);
         return ResponseEntity.ok(
                 ApiResponse.success("Operation completed successfully", data, HttpStatus.OK.value())
         );

@@ -18,8 +18,7 @@ import lombok.Setter;
 public class LeadDropdownResponse {
 
     private UUID uuid;
-    private String firstName;
-    private String lastName;
+    private String ownerName;
     private String companyName;
     private String email;
 }

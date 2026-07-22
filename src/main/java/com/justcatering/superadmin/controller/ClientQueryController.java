@@ -126,6 +126,7 @@ public class ClientQueryController {
             @RequestParam(required = false) UUID clientUuid,
             @RequestParam(required = false) UUID assignedUserUuid,
             @RequestParam(required = false) UUID departmentUuid,
+            @RequestParam(required = false) String queryType,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) String sortBy,
@@ -138,6 +139,7 @@ public class ClientQueryController {
                 clientUuid,
                 assignedUserUuid,
                 departmentUuid,
+                queryType,
                 PageableUtil.of(page, size, sortBy, direction)
         );
         return ResponseEntity.ok(
@@ -160,7 +162,7 @@ public class ClientQueryController {
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String direction
     ) {
-        return list(search, null, null, null, null, null, page, size, sortBy, direction);
+        return list(search, null, null, null, null, null, null, page, size, sortBy, direction);
     }
 
     /**
@@ -178,6 +180,7 @@ public class ClientQueryController {
             @RequestParam(required = false) UUID clientUuid,
             @RequestParam(required = false) UUID assignedUserUuid,
             @RequestParam(required = false) UUID departmentUuid,
+            @RequestParam(required = false) String queryType,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) String sortBy,
@@ -185,7 +188,7 @@ public class ClientQueryController {
     ) {
         return list(
                 search, status, priority, clientUuid, assignedUserUuid,
-                departmentUuid, page, size, sortBy, direction
+                departmentUuid, queryType, page, size, sortBy, direction
         );
     }
 

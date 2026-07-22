@@ -26,6 +26,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 /**
  * Default implementation of {@link LeadService}.
@@ -45,21 +46,23 @@ public class LeadServiceImpl implements LeadService {
      */
     @Override
     public LeadDetailsResponse create(LeadCreateRequest request) {
-        String email = request.getEmail().trim().toLowerCase();
-        if (leadRepository.existsByEmailIgnoreCaseAndDeletedFalse(email)) {
+        String email = normalizeEmail(request.getEmail());
+        if (StringUtils.hasText(email) && leadRepository.existsByEmailIgnoreCaseAndDeletedFalse(email)) {
             throw new BusinessException("Lead email already exists", "LEAD_EMAIL_EXISTS");
         }
 
+        String ownerName = request.resolveOwnerName();
         Lead lead = Lead.builder()
-                .firstName(request.getFirstName().trim())
-                .lastName(request.getLastName().trim())
-                .email(email)
+                .firstName(ownerName)
+                .lastName("")
+                .email(email != null ? email : "")
                 .companyName(request.getCompanyName().trim())
                 .phone(request.getPhone().trim())
+                .address(request.getAddress().trim())
                 .state(request.getState().trim())
                 .city(request.getCity().trim())
                 .approxBudget(request.getApproxBudget())
-                .product(resolveOptionalProduct(request.getProductUuid()))
+                .product(resolveProduct(request.getProductUuid(), request.getProductName()))
                 .notes(normalizeOptional(request.getNotes()))
                 .leadStage(request.getLeadStage() != null ? request.getLeadStage() : LeadStage.NEW)
                 .status(request.getStatus() != null ? request.getStatus() : EntityStatus.ACTIVE)
@@ -67,7 +70,7 @@ public class LeadServiceImpl implements LeadService {
                 .build();
 
         lead = leadRepository.save(lead);
-        log.info("Created lead: {}", lead.getEmail());
+        log.info("Created lead for company: {}", lead.getCompanyName());
         return leadMapper.toDetails(reloadWithProduct(lead.getUuid()));
     }
 
@@ -77,21 +80,22 @@ public class LeadServiceImpl implements LeadService {
     @Override
     public LeadDetailsResponse update(UUID uuid, LeadUpdateRequest request) {
         Lead lead = findOrThrow(uuid);
-        String email = request.getEmail().trim().toLowerCase();
+        String email = normalizeEmail(request.getEmail());
 
-        if (leadRepository.existsByEmailIgnoreCaseAndDeletedFalseAndIdNot(email, lead.getId())) {
+        if (StringUtils.hasText(email) && leadRepository.existsByEmailIgnoreCaseAndDeletedFalseAndIdNot(email, lead.getId())) {
             throw new BusinessException("Lead email already exists", "LEAD_EMAIL_EXISTS");
         }
 
-        lead.setFirstName(request.getFirstName().trim());
-        lead.setLastName(request.getLastName().trim());
-        lead.setEmail(email);
+        lead.setFirstName(request.resolveOwnerName());
+        lead.setLastName("");
+        lead.setEmail(email != null ? email : "");
         lead.setCompanyName(request.getCompanyName().trim());
         lead.setPhone(request.getPhone().trim());
+        lead.setAddress(request.getAddress().trim());
         lead.setState(request.getState().trim());
         lead.setCity(request.getCity().trim());
         lead.setApproxBudget(request.getApproxBudget());
-        lead.setProduct(resolveOptionalProduct(request.getProductUuid()));
+        lead.setProduct(resolveProduct(request.getProductUuid(), request.getProductName()));
         lead.setNotes(normalizeOptional(request.getNotes()));
         if (request.getLeadStage() != null) {
             lead.setLeadStage(request.getLeadStage());
@@ -101,7 +105,7 @@ public class LeadServiceImpl implements LeadService {
         }
 
         leadRepository.save(lead);
-        log.info("Updated lead: {}", lead.getEmail());
+        log.info("Updated lead for company: {}", lead.getCompanyName());
         return leadMapper.toDetails(reloadWithProduct(uuid));
     }
 
@@ -122,7 +126,7 @@ public class LeadServiceImpl implements LeadService {
         Lead lead = findOrThrow(uuid);
         lead.softDelete();
         leadRepository.save(lead);
-        log.info("Soft-deleted lead: {}", lead.getEmail());
+        log.info("Soft-deleted lead for company: {}", lead.getCompanyName());
     }
 
     /**
@@ -162,16 +166,40 @@ public class LeadServiceImpl implements LeadService {
                 .toList();
     }
 
-    private Product resolveOptionalProduct(UUID productUuid) {
-        if (productUuid == null) {
-            return null;
+    private Product resolveProduct(UUID productUuid, String productName) {
+        if (productUuid != null) {
+            return resolveProductByUuid(productUuid);
         }
+        if (StringUtils.hasText(productName)) {
+            return resolveProductByName(productName.trim());
+        }
+        return null;
+    }
+
+    private Product resolveProductByUuid(UUID productUuid) {
         Product product = productRepository.findByUuidAndDeletedFalse(productUuid)
                 .orElseThrow(() -> new EntityNotFoundException("Product", productUuid));
         if (product.getStatus() != EntityStatus.ACTIVE) {
             throw new BusinessException("Selected product is not active");
         }
         return product;
+    }
+
+    private Product resolveProductByName(String productName) {
+        List<Product> products = productRepository.findByNameIgnoreCaseAndDeletedFalseAndStatus(
+                productName,
+                EntityStatus.ACTIVE
+        );
+        if (products.isEmpty()) {
+            throw new EntityNotFoundException("Product with name", productName);
+        }
+        if (products.size() > 1) {
+            throw new BusinessException(
+                    "Multiple products match the given name",
+                    "PRODUCT_NAME_AMBIGUOUS"
+            );
+        }
+        return products.get(0);
     }
 
     private Lead findOrThrow(UUID uuid) {
@@ -189,5 +217,10 @@ public class LeadServiceImpl implements LeadService {
             return null;
         }
         return value.trim();
+    }
+
+    private String normalizeEmail(String value) {
+        String email = normalizeOptional(value);
+        return email != null ? email.toLowerCase() : null;
     }
 }

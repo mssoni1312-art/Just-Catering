@@ -27,6 +27,14 @@ public interface RoleRepository extends JpaRepository<Role, Long>, JpaSpecificat
     Optional<Role> findByCodeAndDeletedFalse(String code);
 
     /**
+     * Finds a non-deleted role by display name.
+     *
+     * @param name role name
+     * @return optional role
+     */
+    Optional<Role> findByNameIgnoreCaseAndDeletedFalse(String name);
+
+    /**
      * Finds a non-deleted role by UUID.
      *
      * @param uuid public UUID
@@ -41,6 +49,14 @@ public interface RoleRepository extends JpaRepository<Role, Long>, JpaSpecificat
      * @return matching roles
      */
     List<Role> findByUuidInAndDeletedFalse(Collection<UUID> uuids);
+
+    /**
+     * Finds non-deleted roles by codes.
+     *
+     * @param codes role codes
+     * @return matching roles
+     */
+    List<Role> findByCodeInAndDeletedFalse(Collection<String> codes);
 
     /**
      * Checks whether a non-deleted role exists with the given code.

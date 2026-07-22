@@ -62,4 +62,13 @@ public interface ProductRepository
      * @return products
      */
     List<Product> findByDeletedFalseAndStatusOrderByNameAsc(EntityStatus status);
+
+    /**
+     * Finds active products matching a display name.
+     *
+     * @param name   product name
+     * @param status entity status
+     * @return matching products
+     */
+    List<Product> findByNameIgnoreCaseAndDeletedFalseAndStatus(String name, EntityStatus status);
 }

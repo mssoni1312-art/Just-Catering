@@ -29,16 +29,17 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 public class Lead extends BaseEntity {
 
-    /** Lead first name. */
+    /** Owner first name (stores full owner name for legacy schema compatibility). */
     @Column(name = "first_name", nullable = false, length = 100)
     private String firstName;
 
-    /** Lead last name. */
+    /** Owner last name (optional legacy field). */
     @Column(name = "last_name", nullable = false, length = 100)
-    private String lastName;
+    @Builder.Default
+    private String lastName = "";
 
-    /** Email address. */
-    @Column(name = "email", nullable = false, length = 255)
+    /** Email address (optional). */
+    @Column(name = "email", length = 255)
     private String email;
 
     /** Company / organization name. */
@@ -48,6 +49,11 @@ public class Lead extends BaseEntity {
     /** Phone number. */
     @Column(name = "phone", nullable = false, length = 20)
     private String phone;
+
+    /** Business or contact address. */
+    @Column(name = "address", nullable = false, length = 500)
+    @Builder.Default
+    private String address = "";
 
     /** State. */
     @Column(name = "state", nullable = false, length = 100)

@@ -2,6 +2,7 @@ package com.justcatering.superadmin.repository;
 
 import com.justcatering.superadmin.entity.Lead;
 import com.justcatering.superadmin.enums.EntityStatus;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -71,4 +72,23 @@ public interface LeadRepository
      * @return lead count
      */
     long countByDeletedFalse();
+
+    /**
+     * Counts non-deleted leads created within an instant range.
+     *
+     * @param fromInclusive inclusive start instant
+     * @param toExclusive   exclusive end instant
+     * @return lead count
+     */
+    @Query("""
+            SELECT COUNT(l)
+            FROM Lead l
+            WHERE l.deleted = FALSE
+              AND l.createdAt >= :fromInclusive
+              AND l.createdAt < :toExclusive
+            """)
+    long countCreatedBetween(
+            @Param("fromInclusive") Instant fromInclusive,
+            @Param("toExclusive") Instant toExclusive
+    );
 }

@@ -43,7 +43,15 @@ public class FileUploadController {
             Map.entry("gif", "image/gif"),
             Map.entry("pdf", "application/pdf"),
             Map.entry("doc", "application/msword"),
-            Map.entry("docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+            Map.entry("docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+            Map.entry("mp3", "audio/mpeg"),
+            Map.entry("m4a", "audio/mp4"),
+            Map.entry("aac", "audio/aac"),
+            Map.entry("wav", "audio/wav"),
+            Map.entry("webm", "audio/webm"),
+            Map.entry("ogg", "audio/ogg"),
+            Map.entry("caf", "audio/x-caf"),
+            Map.entry("mp4", "audio/mp4")
     );
 
     private final FileStorageService fileStorageService;

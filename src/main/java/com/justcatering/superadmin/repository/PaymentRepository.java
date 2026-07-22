@@ -3,6 +3,7 @@ package com.justcatering.superadmin.repository;
 import com.justcatering.superadmin.entity.Payment;
 import com.justcatering.superadmin.enums.EntityStatus;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -113,4 +114,24 @@ public interface PaymentRepository
             WHERE p.deleted = FALSE
             """)
     BigDecimal sumAmountByDeletedFalse();
+
+    /**
+     * Sums paid amounts with payment date inside the given inclusive range.
+     *
+     * @param fromDate inclusive start date
+     * @param toDate   inclusive end date
+     * @return collected amount
+     */
+    @Query("""
+            SELECT COALESCE(SUM(p.amount), 0)
+            FROM Payment p
+            WHERE p.deleted = FALSE
+              AND p.paymentDate IS NOT NULL
+              AND p.paymentDate >= :fromDate
+              AND p.paymentDate <= :toDate
+            """)
+    BigDecimal sumAmountByPaymentDateBetween(
+            @Param("fromDate") LocalDate fromDate,
+            @Param("toDate") LocalDate toDate
+    );
 }

@@ -1,13 +1,14 @@
 package com.justcatering.superadmin.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.justcatering.superadmin.enums.EntityStatus;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.Set;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -57,7 +58,28 @@ public class UserCreateRequest {
     /** Optional initial status (defaults to ACTIVE). */
     private EntityStatus status;
 
-    /** Role UUIDs to assign. */
-    @NotEmpty(message = "At least one role is required")
-    private Set<UUID> roleUuids;
+    /**
+     * Selected role code from the dropdown (e.g. {@code MEMBER}).
+     * Preferred for single-role create forms.
+     */
+    @JsonAlias("role")
+    @Size(max = 50, message = "Role code must not exceed 50 characters")
+    private String roleCode;
+
+    /** Role UUIDs, codes (e.g. MEMBER), or display names (e.g. Member) to assign. */
+    private Set<String> roleUuids;
+
+    /**
+     * Validates that at least one role selector is provided.
+     *
+     * @return {@code true} when a role is present
+     */
+    @AssertTrue(message = "At least one role is required")
+    @JsonIgnore
+    public boolean isRoleSelectionValid() {
+        boolean hasRoleCode = roleCode != null && !roleCode.isBlank();
+        boolean hasRoleUuids = roleUuids != null
+                && roleUuids.stream().anyMatch(value -> value != null && !value.isBlank());
+        return hasRoleCode || hasRoleUuids;
+    }
 }
