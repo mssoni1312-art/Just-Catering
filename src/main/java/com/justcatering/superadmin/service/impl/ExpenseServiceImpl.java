@@ -1,13 +1,16 @@
 package com.justcatering.superadmin.service.impl;
 
+import com.justcatering.superadmin.dto.request.ExpenseCategoryCreateRequest;
 import com.justcatering.superadmin.dto.request.ExpenseCreateRequest;
 import com.justcatering.superadmin.dto.request.ExpenseUpdateRequest;
+import com.justcatering.superadmin.dto.response.ExpenseCategoryResponse;
 import com.justcatering.superadmin.dto.response.ExpenseDetailsResponse;
 import com.justcatering.superadmin.dto.response.ExpenseListResponse;
 import com.justcatering.superadmin.dto.response.ExpenseSummaryResponse;
 import com.justcatering.superadmin.dto.response.PageResponse;
 import com.justcatering.superadmin.entity.Client;
 import com.justcatering.superadmin.entity.Expense;
+import com.justcatering.superadmin.entity.ExpenseCategory;
 import com.justcatering.superadmin.entity.User;
 import com.justcatering.superadmin.enums.EntityStatus;
 import com.justcatering.superadmin.enums.ExpenseType;
@@ -15,13 +18,18 @@ import com.justcatering.superadmin.exception.BusinessException;
 import com.justcatering.superadmin.exception.EntityNotFoundException;
 import com.justcatering.superadmin.mapper.ExpenseMapper;
 import com.justcatering.superadmin.repository.ClientRepository;
+import com.justcatering.superadmin.repository.ExpenseCategoryRepository;
 import com.justcatering.superadmin.repository.ExpenseRepository;
 import com.justcatering.superadmin.repository.UserRepository;
 import com.justcatering.superadmin.service.ExpenseService;
 import com.justcatering.superadmin.specification.ExpenseSpecification;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +37,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 /**
  * Default implementation of {@link ExpenseService}.
@@ -40,6 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ExpenseServiceImpl implements ExpenseService {
 
     private final ExpenseRepository expenseRepository;
+    private final ExpenseCategoryRepository expenseCategoryRepository;
     private final ClientRepository clientRepository;
     private final UserRepository userRepository;
     private final ExpenseMapper expenseMapper;
@@ -175,29 +185,92 @@ public class ExpenseServiceImpl implements ExpenseService {
                 clientUuid, memberUserUuid, expenseType, expenseFrom, expenseTo
         );
 
-        ExpenseSummaryResponse response = ExpenseSummaryResponse.builder()
-                .travel(BigDecimal.ZERO)
-                .food(BigDecimal.ZERO)
-                .office(BigDecimal.ZERO)
-                .other(BigDecimal.ZERO)
-                .total(total != null ? total : BigDecimal.ZERO)
-                .build();
-
+        Map<ExpenseType, BigDecimal> amountsByType = new EnumMap<>(ExpenseType.class);
+        for (ExpenseType type : ExpenseType.values()) {
+            amountsByType.put(type, BigDecimal.ZERO);
+        }
         for (Object[] row : typeTotals) {
             ExpenseType type = (ExpenseType) row[0];
             BigDecimal amount = (BigDecimal) row[1];
-            switch (type) {
-                case TRAVEL -> response.setTravel(amount);
-                case FOOD -> response.setFood(amount);
-                case OFFICE -> response.setOffice(amount);
-                case OTHER -> response.setOther(amount);
-                default -> {
-                    // No-op
-                }
+            if (type != null && amount != null) {
+                amountsByType.put(type, amount);
             }
         }
 
-        return response;
+        List<ExpenseCategoryResponse> categories = new ArrayList<>();
+        for (ExpenseCategory category : expenseCategoryRepository
+                .findByDeletedFalseAndStatusOrderBySortOrderAscNameAsc(EntityStatus.ACTIVE)) {
+            BigDecimal amount = BigDecimal.ZERO;
+            if (StringUtils.hasText(category.getCode())) {
+                try {
+                    ExpenseType mappedType = ExpenseType.valueOf(category.getCode().trim().toUpperCase(Locale.ROOT));
+                    amount = amountsByType.getOrDefault(mappedType, BigDecimal.ZERO);
+                } catch (IllegalArgumentException ignored) {
+                    amount = BigDecimal.ZERO;
+                }
+            }
+            categories.add(toCategoryResponse(category, amount));
+        }
+
+        return ExpenseSummaryResponse.builder()
+                .categories(categories)
+                .travel(amountsByType.get(ExpenseType.TRAVEL))
+                .food(amountsByType.get(ExpenseType.FOOD))
+                .office(amountsByType.get(ExpenseType.OFFICE))
+                .other(amountsByType.get(ExpenseType.OTHER))
+                .total(total != null ? total : BigDecimal.ZERO)
+                .build();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExpenseCategoryResponse> listCategories() {
+        return expenseCategoryRepository
+                .findByDeletedFalseAndStatusOrderBySortOrderAscNameAsc(EntityStatus.ACTIVE)
+                .stream()
+                .map(category -> toCategoryResponse(category, null))
+                .toList();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ExpenseCategoryResponse createCategory(ExpenseCategoryCreateRequest request) {
+        String name = request.getName().trim();
+        if (expenseCategoryRepository.existsByNameIgnoreCaseAndDeletedFalse(name)) {
+            throw new BusinessException("Expense category already exists", "EXPENSE_CATEGORY_EXISTS");
+        }
+
+        Integer maxSortOrder = expenseCategoryRepository.findMaxSortOrder();
+        int nextSortOrder = (maxSortOrder == null ? 0 : maxSortOrder) + 1;
+
+        ExpenseCategory category = ExpenseCategory.builder()
+                .name(name)
+                .code(null)
+                .iconKey(StringUtils.hasText(request.getIconKey()) ? request.getIconKey().trim() : "other")
+                .sortOrder(nextSortOrder)
+                .status(EntityStatus.ACTIVE)
+                .deleted(Boolean.FALSE)
+                .build();
+
+        category = expenseCategoryRepository.save(category);
+        log.info("Created expense category: {}", category.getName());
+        return toCategoryResponse(category, BigDecimal.ZERO);
+    }
+
+    private ExpenseCategoryResponse toCategoryResponse(ExpenseCategory category, BigDecimal amount) {
+        return ExpenseCategoryResponse.builder()
+                .uuid(category.getUuid())
+                .name(category.getName())
+                .code(category.getCode())
+                .iconKey(category.getIconKey())
+                .sortOrder(category.getSortOrder())
+                .amount(amount)
+                .build();
     }
 
     private Client resolveOptionalClient(UUID clientUuid) {

@@ -19,6 +19,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * Global exception handler that maps exceptions to the standard {@link ApiResponse} format.
@@ -133,6 +134,24 @@ public class GlobalExceptionHandler {
                         "HTTP method " + ex.getMethod() + " is not supported for this endpoint",
                         HttpStatus.METHOD_NOT_ALLOWED.value()
                 ));
+    }
+
+    /**
+     * Handles unknown API paths.
+     *
+     * @param ex      missing resource exception
+     * @param request HTTP request
+     * @return not found response
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoResourceFound(
+            NoResourceFoundException ex,
+            HttpServletRequest request
+    ) {
+        log.warn("Resource not found on {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.failure("Resource not found", HttpStatus.NOT_FOUND.value()));
     }
 
     /**

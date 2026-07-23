@@ -1,7 +1,9 @@
 package com.justcatering.superadmin.service;
 
+import com.justcatering.superadmin.dto.request.ExpenseCategoryCreateRequest;
 import com.justcatering.superadmin.dto.request.ExpenseCreateRequest;
 import com.justcatering.superadmin.dto.request.ExpenseUpdateRequest;
+import com.justcatering.superadmin.dto.response.ExpenseCategoryResponse;
 import com.justcatering.superadmin.dto.response.ExpenseDetailsResponse;
 import com.justcatering.superadmin.dto.response.ExpenseListResponse;
 import com.justcatering.superadmin.dto.response.ExpenseSummaryResponse;
@@ -9,6 +11,7 @@ import com.justcatering.superadmin.dto.response.PageResponse;
 import com.justcatering.superadmin.enums.EntityStatus;
 import com.justcatering.superadmin.enums.ExpenseType;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 
@@ -78,7 +81,7 @@ public interface ExpenseService {
     );
 
     /**
-     * Returns aggregated expense totals by type.
+     * Returns aggregated expense totals by category.
      *
      * @param clientUuid     optional client filter
      * @param memberUserUuid optional member user filter
@@ -94,4 +97,19 @@ public interface ExpenseService {
             LocalDate expenseFrom,
             LocalDate expenseTo
     );
+
+    /**
+     * Lists active expense categories for Overall Expenses.
+     *
+     * @return categories
+     */
+    List<ExpenseCategoryResponse> listCategories();
+
+    /**
+     * Creates an expense category (Add Category).
+     *
+     * @param request create payload
+     * @return created category
+     */
+    ExpenseCategoryResponse createCategory(ExpenseCategoryCreateRequest request);
 }

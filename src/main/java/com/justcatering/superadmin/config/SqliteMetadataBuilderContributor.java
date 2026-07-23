@@ -11,5 +11,6 @@ public class SqliteMetadataBuilderContributor implements MetadataBuilderContribu
     @Override
     public void contribute(MetadataBuilder metadataBuilder) {
         metadataBuilder.applyAttributeConverter(new SqliteInstantConverter(), true);
+        metadataBuilder.applyAttributeConverter(new SqliteLocalDateConverter(), true);
     }
 }

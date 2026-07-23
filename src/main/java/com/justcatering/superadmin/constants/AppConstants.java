@@ -48,6 +48,9 @@ public final class AppConstants {
     /** On-site requirement API base path. */
     public static final String REQUIREMENT_API = API_BASE + "/requirements";
 
+    /** On-site manager task plan API base path. */
+    public static final String ONSITE_TASK_PLAN_API = API_BASE + "/onsite-task-plans";
+
     /** Expense management API base path. */
     public static final String EXPENSE_API = API_BASE + "/expenses";
 

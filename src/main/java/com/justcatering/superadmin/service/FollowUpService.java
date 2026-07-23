@@ -57,7 +57,8 @@ public interface FollowUpService {
      * @param search           free-text search
      * @param status           follow-up outcome status
      * @param type             follow-up type
-     * @param clientUuid       client filter
+     * @param clientUuid       client-only filter
+     * @param leadUuid         lead-only filter
      * @param assignedUserUuid assigned user filter
      * @param followUpFrom     follow-up date from
      * @param followUpTo       follow-up date to
@@ -69,6 +70,7 @@ public interface FollowUpService {
             FollowUpStatus status,
             FollowUpType type,
             UUID clientUuid,
+            UUID leadUuid,
             UUID assignedUserUuid,
             LocalDate followUpFrom,
             LocalDate followUpTo,

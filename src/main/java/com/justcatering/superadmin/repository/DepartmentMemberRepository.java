@@ -74,4 +74,12 @@ public interface DepartmentMemberRepository extends JpaRepository<DepartmentMemb
      * @return member count
      */
     long countByDepartmentIdAndDeletedFalse(Long departmentId);
+
+    /**
+     * Finds active memberships for a user (for designation lookup).
+     *
+     * @param userId user id
+     * @return active memberships
+     */
+    List<DepartmentMember> findByUserIdAndDeletedFalse(Long userId);
 }

@@ -1,9 +1,11 @@
 package com.justcatering.superadmin.controller;
 
 import com.justcatering.superadmin.constants.AppConstants;
+import com.justcatering.superadmin.dto.request.ExpenseCategoryCreateRequest;
 import com.justcatering.superadmin.dto.request.ExpenseCreateRequest;
 import com.justcatering.superadmin.dto.request.ExpenseUpdateRequest;
 import com.justcatering.superadmin.dto.response.ApiResponse;
+import com.justcatering.superadmin.dto.response.ExpenseCategoryResponse;
 import com.justcatering.superadmin.dto.response.ExpenseDetailsResponse;
 import com.justcatering.superadmin.dto.response.ExpenseListResponse;
 import com.justcatering.superadmin.dto.response.ExpenseSummaryResponse;
@@ -17,6 +19,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -80,6 +83,38 @@ public class ExpenseController {
         return ResponseEntity.ok(
                 ApiResponse.success("Resource updated successfully", data, HttpStatus.OK.value())
         );
+    }
+
+    /**
+     * Returns expense categories for the Overall Expenses screen.
+     *
+     * @return categories
+     */
+    @GetMapping("/categories")
+    @PreAuthorize("hasAnyAuthority('EXPENSE_VIEW', 'EXPENSE_MANAGE')")
+    @Operation(summary = "List expense categories")
+    public ResponseEntity<ApiResponse<List<ExpenseCategoryResponse>>> listCategories() {
+        List<ExpenseCategoryResponse> data = expenseService.listCategories();
+        return ResponseEntity.ok(
+                ApiResponse.success("Operation completed successfully", data, HttpStatus.OK.value())
+        );
+    }
+
+    /**
+     * Adds a new expense category (Add Category button).
+     *
+     * @param request create payload
+     * @return created category
+     */
+    @PostMapping("/categories")
+    @PreAuthorize("hasAuthority('EXPENSE_MANAGE')")
+    @Operation(summary = "Add expense category")
+    public ResponseEntity<ApiResponse<ExpenseCategoryResponse>> createCategory(
+            @Valid @RequestBody ExpenseCategoryCreateRequest request
+    ) {
+        ExpenseCategoryResponse data = expenseService.createCategory(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Resource created successfully", data, HttpStatus.CREATED.value()));
     }
 
     /**

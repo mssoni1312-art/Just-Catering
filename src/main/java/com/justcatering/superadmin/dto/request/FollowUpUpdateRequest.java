@@ -30,10 +30,12 @@ import lombok.Setter;
 @AllArgsConstructor
 public class FollowUpUpdateRequest {
 
-    /** Related client UUID (use for converted clients). */
+    /** Related client UUID (required for client follow-ups; do not send with leadUuid). */
+    @JsonAlias({"clientId"})
     private UUID clientUuid;
 
-    /** Related meeting lead UUID (use before client conversion). */
+    /** Related meeting lead UUID (required for lead follow-ups; do not send with clientUuid). */
+    @JsonAlias({"leadId"})
     private UUID leadUuid;
 
     /** Follow-up title (Title Name). */

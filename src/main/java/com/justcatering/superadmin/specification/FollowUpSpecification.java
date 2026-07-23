@@ -27,7 +27,8 @@ public final class FollowUpSpecification {
      * @param search           free-text search
      * @param status           follow-up outcome status
      * @param type             follow-up type
-     * @param clientUuid       client or lead UUID filter
+     * @param clientUuid       client-only UUID filter
+     * @param leadUuid         lead-only UUID filter
      * @param assignedUserUuid assigned user UUID filter
      * @param followUpFrom     follow-up date from
      * @param followUpTo       follow-up date to
@@ -38,6 +39,7 @@ public final class FollowUpSpecification {
             FollowUpStatus status,
             FollowUpType type,
             UUID clientUuid,
+            UUID leadUuid,
             UUID assignedUserUuid,
             LocalDate followUpFrom,
             LocalDate followUpTo
@@ -84,10 +86,14 @@ public final class FollowUpSpecification {
                 predicates.add(cb.equal(root.get("followUpType"), type));
             }
             if (clientUuid != null) {
+                // Flutter lead screens often pass the lead UUID as clientUuid.
                 predicates.add(cb.or(
                         cb.equal(root.get("client").get("uuid"), clientUuid),
                         cb.equal(root.get("lead").get("uuid"), clientUuid)
                 ));
+            }
+            if (leadUuid != null) {
+                predicates.add(cb.equal(root.get("lead").get("uuid"), leadUuid));
             }
             if (assignedUserUuid != null) {
                 predicates.add(cb.equal(root.get("assignedUser").get("uuid"), assignedUserUuid));

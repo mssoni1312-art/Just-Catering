@@ -48,14 +48,17 @@ public class FollowUpController {
     private final FollowUpService followUpService;
 
     /**
-     * Creates a follow-up.
+     * Creates a follow-up for a specific client or lead.
      *
-     * @param request create payload
+     * @param request create payload ({@code clientUuid} OR {@code leadUuid})
      * @return created follow-up
      */
     @PostMapping
     @PreAuthorize("hasAuthority('FOLLOWUP_MANAGE')")
-    @Operation(summary = "Create follow-up")
+    @Operation(
+            summary = "Create follow-up",
+            description = "Pass clientUuid for a client. Lead screens may also send a lead UUID in clientUuid."
+    )
     public ResponseEntity<ApiResponse<FollowUpDetailsResponse>> create(
             @Valid @RequestBody FollowUpCreateRequest request
     ) {
@@ -73,7 +76,10 @@ public class FollowUpController {
      */
     @PutMapping("/{uuid}")
     @PreAuthorize("hasAuthority('FOLLOWUP_MANAGE')")
-    @Operation(summary = "Update follow-up")
+    @Operation(
+            summary = "Update follow-up",
+            description = "Optionally re-bind with clientUuid OR leadUuid. Omit both to keep the current client/lead."
+    )
     public ResponseEntity<ApiResponse<FollowUpDetailsResponse>> update(
             @PathVariable UUID uuid,
             @Valid @RequestBody FollowUpUpdateRequest request
@@ -131,17 +137,24 @@ public class FollowUpController {
 
     /**
      * Lists follow-ups with optional filters.
+     * <p>
+     * For a client screen use {@code clientUuid}. For a lead screen use {@code leadUuid}.
+     * </p>
      *
      * @return page of follow-ups
      */
     @GetMapping
     @PreAuthorize("hasAuthority('FOLLOWUP_VIEW')")
-    @Operation(summary = "List follow-ups")
+    @Operation(
+            summary = "List follow-ups",
+            description = "Filter client-wise with clientUuid, or lead-wise with leadUuid"
+    )
     public ResponseEntity<ApiResponse<PageResponse<FollowUpListResponse>>> list(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) FollowUpStatus status,
             @RequestParam(required = false) FollowUpType type,
             @RequestParam(required = false) UUID clientUuid,
+            @RequestParam(required = false) UUID leadUuid,
             @RequestParam(required = false) UUID assignedUserUuid,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate followUpFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate followUpTo,
@@ -155,6 +168,7 @@ public class FollowUpController {
                 status,
                 type,
                 clientUuid,
+                leadUuid,
                 assignedUserUuid,
                 followUpFrom,
                 followUpTo,
@@ -175,12 +189,14 @@ public class FollowUpController {
     @Operation(summary = "Search follow-ups")
     public ResponseEntity<ApiResponse<PageResponse<FollowUpListResponse>>> search(
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) UUID clientUuid,
+            @RequestParam(required = false) UUID leadUuid,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String direction
     ) {
-        return list(search, null, null, null, null, null, null, page, size, sortBy, direction);
+        return list(search, null, null, clientUuid, leadUuid, null, null, null, page, size, sortBy, direction);
     }
 
     /**
@@ -196,6 +212,7 @@ public class FollowUpController {
             @RequestParam(required = false) FollowUpStatus status,
             @RequestParam(required = false) FollowUpType type,
             @RequestParam(required = false) UUID clientUuid,
+            @RequestParam(required = false) UUID leadUuid,
             @RequestParam(required = false) UUID assignedUserUuid,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate followUpFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate followUpTo,
@@ -205,7 +222,7 @@ public class FollowUpController {
             @RequestParam(required = false) String direction
     ) {
         return list(
-                search, status, type, clientUuid, assignedUserUuid,
+                search, status, type, clientUuid, leadUuid, assignedUserUuid,
                 followUpFrom, followUpTo, page, size, sortBy, direction
         );
     }

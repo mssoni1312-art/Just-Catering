@@ -114,7 +114,7 @@ public class FollowUpServiceImpl implements FollowUpService {
                 ? resolveReminderMinutes(request.getReminder(), request.getReminderMinutes())
                 : null;
 
-        ProspectTarget prospect = resolveProspect(request.getClientUuid(), request.getLeadUuid());
+        ProspectTarget prospect = resolveProspectForUpdate(followUp, request.getClientUuid(), request.getLeadUuid());
 
         followUp.setClient(prospect.client());
         followUp.setLead(prospect.lead());
@@ -172,6 +172,7 @@ public class FollowUpServiceImpl implements FollowUpService {
             FollowUpStatus status,
             FollowUpType type,
             UUID clientUuid,
+            UUID leadUuid,
             UUID assignedUserUuid,
             LocalDate followUpFrom,
             LocalDate followUpTo,
@@ -179,7 +180,7 @@ public class FollowUpServiceImpl implements FollowUpService {
     ) {
         Page<FollowUp> page = followUpRepository.findAll(
                 FollowUpSpecification.filter(
-                        search, status, type, clientUuid, assignedUserUuid, followUpFrom, followUpTo
+                        search, status, type, clientUuid, leadUuid, assignedUserUuid, followUpFrom, followUpTo
                 ),
                 pageable
         );
@@ -214,6 +215,41 @@ public class FollowUpServiceImpl implements FollowUpService {
                 .toList();
     }
 
+    private ProspectTarget resolveProspect(UUID clientUuid, UUID leadUuid) {
+        if (clientUuid != null && leadUuid != null && !clientUuid.equals(leadUuid)) {
+            throw new BusinessException(
+                    "Provide either clientUuid or leadUuid, not both",
+                    "FOLLOWUP_PROSPECT_CONFLICT"
+            );
+        }
+
+        // Flutter often sends a lead UUID in clientUuid on lead screens.
+        UUID prospectUuid = clientUuid != null ? clientUuid : leadUuid;
+        if (prospectUuid == null) {
+            throw new BusinessException("Client or lead is required", "FOLLOWUP_PROSPECT_REQUIRED");
+        }
+
+        if (clientUuid != null) {
+            return clientRepository.findByUuidAndDeletedFalse(clientUuid)
+                    .map(client -> {
+                        if (client.getStatus() != EntityStatus.ACTIVE) {
+                            throw new BusinessException("Selected client is not active");
+                        }
+                        return ProspectTarget.forClient(client);
+                    })
+                    .orElseGet(() -> ProspectTarget.forLead(resolveActiveLead(clientUuid)));
+        }
+
+        return ProspectTarget.forLead(resolveActiveLead(leadUuid));
+    }
+
+    private ProspectTarget resolveProspectForUpdate(FollowUp existing, UUID clientUuid, UUID leadUuid) {
+        if (clientUuid == null && leadUuid == null) {
+            return new ProspectTarget(existing.getClient(), existing.getLead());
+        }
+        return resolveProspect(clientUuid, leadUuid);
+    }
+
     private Lead resolveActiveLead(UUID leadUuid) {
         Lead lead = leadRepository.findByUuidAndDeletedFalse(leadUuid)
                 .orElseThrow(() -> new EntityNotFoundException("Lead", leadUuid));
@@ -224,24 +260,6 @@ public class FollowUpServiceImpl implements FollowUpService {
             throw new BusinessException("Cannot create follow-up for a lost lead");
         }
         return lead;
-    }
-
-    private ProspectTarget resolveProspect(UUID clientUuid, UUID leadUuid) {
-        if (leadUuid != null) {
-            return ProspectTarget.forLead(resolveActiveLead(leadUuid));
-        }
-        if (clientUuid == null) {
-            throw new BusinessException("Client or lead is required", "FOLLOWUP_PROSPECT_REQUIRED");
-        }
-
-        return clientRepository.findByUuidAndDeletedFalse(clientUuid)
-                .map(client -> {
-                    if (client.getStatus() != EntityStatus.ACTIVE) {
-                        throw new BusinessException("Selected client is not active");
-                    }
-                    return ProspectTarget.forClient(client);
-                })
-                .orElseGet(() -> ProspectTarget.forLead(resolveActiveLead(clientUuid)));
     }
 
     private record ProspectTarget(Client client, Lead lead) {
